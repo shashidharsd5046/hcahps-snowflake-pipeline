@@ -73,6 +73,17 @@ CREATE OR REPLACE TABLE HCAHPS_DW.RAW.RAW_HCAHPS (
 );
 
 -- =============================================
+-- SNOWPIPE — automatically ingests data from stage into raw table
+-- =============================================
+
+CREATE OR REPLACE PIPE HCAHPS_DW.RAW.HCAHPS_PIPE
+    AUTO_INGEST = FALSE  -- False because it's an internal stage
+AS
+COPY INTO HCAHPS_DW.RAW.RAW_HCAHPS
+FROM @HCAHPS_DW.RAW.HCAHPS_STAGE
+FILE_FORMAT = (FORMAT_NAME = HCAHPS_DW.RAW.CSV_FORMAT);
+
+-- =============================================
 -- STATE-REGION LOOKUP TABLE
 -- =============================================
 
