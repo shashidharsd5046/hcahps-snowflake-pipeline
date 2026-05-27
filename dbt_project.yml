@@ -24,6 +24,6 @@ models:
       +materialized: view
       +tags: ['staging', 'silver']
     marts:
-      +schema: ANALYTICS
+      +schema: MARTS
       +materialized: table
       +tags: ['marts', 'gold']
