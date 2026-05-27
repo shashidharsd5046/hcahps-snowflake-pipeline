@@ -1,0 +1,27 @@
+# profiles.yml — Snowflake connection for HCAHPS dbt project
+# Place this file at ~/.dbt/profiles.yml or set DBT_PROFILES_DIR
+
+hcahps_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: ACCOUNTADMIN
+      warehouse: HCAHPS_WH
+      database: HCAHPS_DW
+      schema: RAW
+      threads: 4
+
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: ACCOUNTADMIN
+      warehouse: HCAHPS_WH
+      database: HCAHPS_DW
+      schema: RAW
+      threads: 8

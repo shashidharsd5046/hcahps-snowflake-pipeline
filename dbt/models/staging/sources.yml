@@ -1,0 +1,60 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Bronze layer — raw HCAHPS CSV data loaded via COPY INTO"
+    database: HCAHPS_DW
+    schema: RAW
+    tables:
+      - name: raw_hcahps
+        description: >
+          Raw landing table containing all HCAHPS hospital survey data
+          loaded from CMS CSV files. Each row is one facility + one measure.
+          Contains 325,856 rows across 4,792 hospitals and 68 survey measures.
+        columns:
+          - name: facility_id
+            description: "CMS Certification Number (CCN) — unique hospital identifier"
+          - name: facility_name
+            description: "Official hospital name"
+          - name: address
+            description: "Street address"
+          - name: city
+            description: "City or town"
+          - name: state
+            description: "Two-letter US state/territory code"
+          - name: zip_code
+            description: "Five-digit ZIP code"
+          - name: county_parish
+            description: "County or parish name"
+          - name: telephone_number
+            description: "Hospital phone number"
+          - name: hcahps_measure_id
+            description: "Survey measure identifier (e.g., H_COMP_1_A_P)"
+          - name: hcahps_question
+            description: "Full text of the survey question"
+          - name: hcahps_answer_desc
+            description: "Description of the answer option"
+          - name: star_rating
+            description: "Patient survey star rating (1-5) or 'Not Applicable'"
+          - name: star_rating_footnote
+            description: "Footnote code explaining missing/suppressed ratings"
+          - name: answer_percent
+            description: "Percentage of patients who gave this answer"
+          - name: answer_percent_footnote
+            description: "Footnote code for answer percentage"
+          - name: linear_mean_value
+            description: "Linear mean score (0-100)"
+          - name: completed_surveys
+            description: "Number of completed surveys for this hospital"
+          - name: completed_surveys_fn
+            description: "Footnote code for completed surveys"
+          - name: response_rate_pct
+            description: "Survey response rate percentage"
+          - name: response_rate_pct_fn
+            description: "Footnote code for response rate"
+          - name: start_date
+            description: "Survey period start date (MM/DD/YYYY format)"
+          - name: end_date
+            description: "Survey period end date (MM/DD/YYYY format)"
+          - name: _loaded_at
+            description: "Timestamp when the row was loaded into Snowflake"

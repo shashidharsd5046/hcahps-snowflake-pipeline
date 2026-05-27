@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: stg_hospitals
+    description: >
+      Deduplicated hospital dimension from raw survey data.
+      Uses QUALIFY ROW_NUMBER to keep only the latest version of each hospital.
+      ~4,792 unique hospitals.
+    columns:
+      - name: facility_id
+        description: "CMS Certification Number — unique hospital identifier"
+        tests:
+          - unique
+          - not_null
+      - name: facility_name
+        description: "Official hospital name"
+        tests:
+          - not_null
+      - name: state
+        description: "Two-letter US state/territory code"
+        tests:
+          - not_null
+
+  - name: stg_measures
+    description: >
+      68 unique HCAHPS survey measures with domain and type classifications.
+      Each measure is classified into one of 10 domains
+      (Nurse Communication, Doctor Communication, etc.)
+      and one of 3 types (PERCENT, LINEAR_SCORE, STAR_RATING).
+    columns:
+      - name: measure_id
+        description: "HCAHPS measure identifier (e.g., H_COMP_1_A_P)"
+        tests:
+          - not_null
+      - name: measure_domain
+        description: "Survey domain (e.g., Nurse Communication, Cleanliness)"
+        tests:
+          - not_null
+      - name: measure_type
+        description: "Value type: PERCENT, LINEAR_SCORE, or STAR_RATING"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PERCENT', 'LINEAR_SCORE', 'STAR_RATING']
+
+  - name: stg_survey_responses
+    description: >
+      Cleaned and type-cast survey responses with safe type conversions.
+      Deduplicated by facility_id + hcahps_measure_id, keeping the latest load.
+    columns:
+      - name: facility_id
+        description: "Hospital facility identifier"
+        tests:
+          - not_null
+      - name: hcahps_measure_id
+        description: "Survey measure identifier"
+        tests:
+          - not_null
+      - name: star_rating
+        description: "Star rating cast to INT (1-5), NULL if not applicable"
+      - name: answer_percent
+        description: "Answer percentage cast to DECIMAL"
+      - name: survey_start_date
+        description: "Survey period start date"
+      - name: survey_end_date
+        description: "Survey period end date"

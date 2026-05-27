@@ -122,25 +122,91 @@ flowchart LR
 hcahps-snowflake-pipeline/
 ├── README.md                                    # This file
 ├── .gitignore
-├── snowflake/
+├── snowflake/                                   # Raw SQL scripts (Dynamic Tables)
 │   ├── 01_setup_infrastructure.sql              # Database, schemas, stage, raw table
 │   ├── 02_create_dynamic_tables_staging.sql     # Silver: 3 staging dynamic tables
 │   ├── 03_create_dynamic_tables_analytics.sql   # Gold: fact, scorecard, geography
 │   ├── 04_load_data_and_test.sql                # Load split files & verify pipeline
 │   ├── 05_monitoring_queries.sql                # Pipeline health checks & analytics
 │   └── 06_scd2_dynamic_table.sql                # Bonus: SCD Type 2 with LEAD()
+├── dbt/                                         # dbt project (alternative approach)
+│   ├── dbt_project.yml                          # Project configuration
+│   ├── profiles.yml                             # Snowflake connection
+│   ├── packages.yml                             # dbt packages (dbt_utils)
+│   ├── models/
+│   │   ├── staging/                             # 🥈 Silver Layer (views)
+│   │   │   ├── sources.yml
+│   │   │   ├── schema.yml
+│   │   │   ├── stg_hospitals.sql
+│   │   │   ├── stg_measures.sql
+│   │   │   └── stg_survey_responses.sql
+│   │   └── marts/                               # 🥇 Gold Layer (tables)
+│   │       ├── schema.yml
+│   │       ├── dim_geography.sql
+│   │       ├── dim_hospital_scd2.sql
+│   │       └── fact_survey_results.sql
+│   ├── seeds/state_regions.csv
+│   ├── tests/
+│   ├── macros/
+│   ├── snapshots/
+│   └── analyses/
 ├── data/
 │   └── split_data/                              # 6 CSV files for incremental testing
-│       ├── hcahps_initial_load.csv              # 50 MB — bulk initial load
-│       ├── hcahps_incremental_1.csv             # 10 MB — incremental batch 1
-│       ├── hcahps_incremental_2.csv             # 10 MB — incremental batch 2
-│       ├── hcahps_incremental_3.csv             # 10 MB — incremental batch 3
-│       ├── hcahps_incremental_4.csv             # 10 MB — incremental batch 4
-│       └── hcahps_incremental_5.csv             # 10 MB — incremental batch 5
 └── docs/
     ├── pipeline_architecture.png                # Architecture diagram
     └── data_dictionary.md                       # Column definitions & domains
 ```
+
+---
+
+## 🔄 dbt Project
+
+This repo includes a **full dbt project** (`dbt/`) as an alternative transformation approach. While the `snowflake/` directory uses raw SQL with Dynamic Tables, the `dbt/` directory implements the same Bronze → Silver → Gold pipeline using dbt's modular, testable, and version-controlled framework.
+
+### dbt DAG
+
+```mermaid
+flowchart LR
+    SRC["🥉 source\nraw_hcahps"]
+
+    subgraph Silver["🥈 Staging (views)"]
+        H["stg_hospitals"]
+        M["stg_measures"]
+        S["stg_survey_responses"]
+    end
+
+    subgraph Gold["🥇 Marts (tables)"]
+        G["dim_geography"]
+        F["fact_survey_results\n(wide: all 68 measures)"]
+        SCD["dim_hospital_scd2"]
+    end
+
+    SEED["🌱 seed\nstate_regions"]
+
+    SRC --> H & M & S
+    SRC --> SCD
+    H --> G
+    SEED --> G
+    H & S & G --> F
+```
+
+### Quick Start
+
+```bash
+cd dbt/
+export SNOWFLAKE_ACCOUNT="your-account"
+export SNOWFLAKE_USER="your-user"
+export SNOWFLAKE_PASSWORD="your-password"
+
+pip install dbt-snowflake
+dbt deps       # Install packages
+dbt seed       # Load state_regions lookup
+dbt run        # Build all models
+dbt test       # Run all tests
+dbt docs generate && dbt docs serve  # View documentation
+```
+
+See [`dbt/README.md`](dbt/README.md) for full details.
 
 ---
 

@@ -1,0 +1,29 @@
+name: 'hcahps_pipeline'
+version: '1.0.0'
+config-version: 2
+
+profile: 'hcahps_pipeline'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+analysis-paths: ["analyses"]
+snapshot-paths: ["snapshots"]
+clean-targets: ["target", "dbt_packages"]
+
+seeds:
+  hcahps_pipeline:
+    state_regions:
+      +schema: STAGING
+
+models:
+  hcahps_pipeline:
+    staging:
+      +schema: STAGING
+      +materialized: view
+      +tags: ['staging', 'silver']
+    marts:
+      +schema: ANALYTICS
+      +materialized: table
+      +tags: ['marts', 'gold']

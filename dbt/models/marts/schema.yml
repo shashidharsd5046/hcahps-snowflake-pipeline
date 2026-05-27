@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: dim_geography
+    description: >
+      Geography dimension table joining unique hospital locations
+      with US state/region classifications from the state_regions seed.
+    columns:
+      - name: geo_key
+        description: "MD5 surrogate key from state + county + zip"
+        tests:
+          - unique
+          - not_null
+      - name: state
+        description: "Two-letter state code"
+        tests:
+          - not_null
+      - name: region
+        description: "US region: Northeast, Southeast, Midwest, West, or Territory"
+        tests:
+          - not_null
+
+  - name: fact_survey_results
+    description: >
+      Wide pivoted fact table — 1 row per hospital containing ALL 68 survey
+      measures as dedicated columns. Covers every answer choice (Always,
+      Usually, Sometimes/Never), linear mean scores, and star ratings
+      across all 10 HCAHPS survey domains.
+    columns:
+      - name: facility_id
+        description: "Hospital facility identifier"
+        tests:
+          - unique
+          - not_null
+      - name: overall_star_rating
+        description: "Hospital overall star rating (1-5)"
+      - name: nurse_comm_always_pct
+        description: "Pct of patients who said nurses always communicated well"
+      - name: doctor_comm_always_pct
+        description: "Pct of patients who said doctors always communicated well"
+      - name: recommend_definitely_pct
+        description: "Pct of patients who would definitely recommend the hospital"
+      - name: completed_surveys
+        description: "Number of completed surveys"
+
+  - name: dim_hospital_scd2
+    description: >
+      SCD Type 2 hospital dimension tracking full history of hospital
+      attribute changes over time using LEAD() window function.
+      Each row represents one version of a hospital with valid_from/valid_to dates.
+    columns:
+      - name: hospital_version_key
+        description: "Surrogate key for each hospital version"
+        tests:
+          - unique
+          - not_null
+      - name: facility_id
+        description: "Hospital facility identifier"
+        tests:
+          - not_null
+      - name: is_current
+        description: "TRUE if this is the current active version"
+        tests:
+          - not_null
