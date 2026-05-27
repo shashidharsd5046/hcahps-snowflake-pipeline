@@ -1,0 +1,25 @@
+# Data files (too large for git)
+data/split_data/*.csv
+data/*.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Snowflake
+snowsql_config

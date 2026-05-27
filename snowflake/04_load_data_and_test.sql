@@ -1,0 +1,80 @@
+-- =============================================
+-- HCAHPS Snowflake Pipeline - Data Loading & Testing
+-- Script 4 of 4: Load split files and verify pipeline
+-- =============================================
+
+USE WAREHOUSE HCAHPS_WH;
+USE DATABASE HCAHPS_DW;
+
+-- =============================================
+-- STEP 1: INITIAL BULK LOAD (50% of data)
+-- =============================================
+
+-- Upload file to stage (run from SnowSQL or Snowflake UI)
+PUT file:///path/to/split_data/hcahps_initial_load.csv
+    @HCAHPS_DW.RAW.HCAHPS_STAGE
+    AUTO_COMPRESS = TRUE;
+
+-- Load into raw table
+COPY INTO HCAHPS_DW.RAW.RAW_HCAHPS
+    FROM @HCAHPS_DW.RAW.HCAHPS_STAGE/hcahps_initial_load.csv
+    FILE_FORMAT = HCAHPS_DW.RAW.CSV_FORMAT
+    ON_ERROR = 'CONTINUE';
+
+-- Verify: Expected 162,928 rows
+SELECT COUNT(*) AS raw_rows FROM HCAHPS_DW.RAW.RAW_HCAHPS;
+
+-- Wait ~5 minutes for Dynamic Tables to auto-refresh, then verify all layers:
+SELECT 'RAW'             AS layer, COUNT(*) AS rows FROM HCAHPS_DW.RAW.RAW_HCAHPS
+UNION ALL SELECT 'STG_HOSPITALS',  COUNT(*) FROM HCAHPS_DW.STAGING.DT_STG_HOSPITALS
+UNION ALL SELECT 'STG_MEASURES',   COUNT(*) FROM HCAHPS_DW.STAGING.DT_STG_MEASURES
+UNION ALL SELECT 'STG_RESPONSES',  COUNT(*) FROM HCAHPS_DW.STAGING.DT_STG_SURVEY_RESPONSES
+UNION ALL SELECT 'FACT_RESULTS',   COUNT(*) FROM HCAHPS_DW.ANALYTICS.DT_FACT_SURVEY_RESULTS
+UNION ALL SELECT 'SCORECARD',      COUNT(*) FROM HCAHPS_DW.ANALYTICS.DT_HOSPITAL_SCORECARD
+UNION ALL SELECT 'DIM_GEOGRAPHY',  COUNT(*) FROM HCAHPS_DW.ANALYTICS.DT_DIM_GEOGRAPHY
+ORDER BY layer;
+
+
+-- =============================================
+-- STEP 2-6: INCREMENTAL LOADS
+-- Repeat for each incremental file
+-- =============================================
+
+-- Incremental 1
+PUT file:///path/to/split_data/hcahps_incremental_1.csv @HCAHPS_DW.RAW.HCAHPS_STAGE AUTO_COMPRESS=TRUE;
+COPY INTO HCAHPS_DW.RAW.RAW_HCAHPS FROM @HCAHPS_DW.RAW.HCAHPS_STAGE/hcahps_incremental_1.csv FILE_FORMAT=HCAHPS_DW.RAW.CSV_FORMAT ON_ERROR='CONTINUE';
+SELECT COUNT(*) FROM HCAHPS_DW.RAW.RAW_HCAHPS; -- Expected: 195,513
+
+-- Incremental 2
+PUT file:///path/to/split_data/hcahps_incremental_2.csv @HCAHPS_DW.RAW.HCAHPS_STAGE AUTO_COMPRESS=TRUE;
+COPY INTO HCAHPS_DW.RAW.RAW_HCAHPS FROM @HCAHPS_DW.RAW.HCAHPS_STAGE/hcahps_incremental_2.csv FILE_FORMAT=HCAHPS_DW.RAW.CSV_FORMAT ON_ERROR='CONTINUE';
+SELECT COUNT(*) FROM HCAHPS_DW.RAW.RAW_HCAHPS; -- Expected: 228,098
+
+-- Incremental 3
+PUT file:///path/to/split_data/hcahps_incremental_3.csv @HCAHPS_DW.RAW.HCAHPS_STAGE AUTO_COMPRESS=TRUE;
+COPY INTO HCAHPS_DW.RAW.RAW_HCAHPS FROM @HCAHPS_DW.RAW.HCAHPS_STAGE/hcahps_incremental_3.csv FILE_FORMAT=HCAHPS_DW.RAW.CSV_FORMAT ON_ERROR='CONTINUE';
+SELECT COUNT(*) FROM HCAHPS_DW.RAW.RAW_HCAHPS; -- Expected: 260,683
+
+-- Incremental 4
+PUT file:///path/to/split_data/hcahps_incremental_4.csv @HCAHPS_DW.RAW.HCAHPS_STAGE AUTO_COMPRESS=TRUE;
+COPY INTO HCAHPS_DW.RAW.RAW_HCAHPS FROM @HCAHPS_DW.RAW.HCAHPS_STAGE/hcahps_incremental_4.csv FILE_FORMAT=HCAHPS_DW.RAW.CSV_FORMAT ON_ERROR='CONTINUE';
+SELECT COUNT(*) FROM HCAHPS_DW.RAW.RAW_HCAHPS; -- Expected: 293,268
+
+-- Incremental 5 (FINAL)
+PUT file:///path/to/split_data/hcahps_incremental_5.csv @HCAHPS_DW.RAW.HCAHPS_STAGE AUTO_COMPRESS=TRUE;
+COPY INTO HCAHPS_DW.RAW.RAW_HCAHPS FROM @HCAHPS_DW.RAW.HCAHPS_STAGE/hcahps_incremental_5.csv FILE_FORMAT=HCAHPS_DW.RAW.CSV_FORMAT ON_ERROR='CONTINUE';
+SELECT COUNT(*) FROM HCAHPS_DW.RAW.RAW_HCAHPS; -- Expected: 325,856 (ALL DATA)
+
+
+-- =============================================
+-- FINAL VERIFICATION (wait 5 min for refresh)
+-- =============================================
+
+SELECT 'RAW'             AS layer, COUNT(*) AS rows FROM HCAHPS_DW.RAW.RAW_HCAHPS
+UNION ALL SELECT 'STG_HOSPITALS',  COUNT(*) FROM HCAHPS_DW.STAGING.DT_STG_HOSPITALS
+UNION ALL SELECT 'STG_MEASURES',   COUNT(*) FROM HCAHPS_DW.STAGING.DT_STG_MEASURES
+UNION ALL SELECT 'STG_RESPONSES',  COUNT(*) FROM HCAHPS_DW.STAGING.DT_STG_SURVEY_RESPONSES
+UNION ALL SELECT 'FACT_RESULTS',   COUNT(*) FROM HCAHPS_DW.ANALYTICS.DT_FACT_SURVEY_RESULTS
+UNION ALL SELECT 'SCORECARD',      COUNT(*) FROM HCAHPS_DW.ANALYTICS.DT_HOSPITAL_SCORECARD
+UNION ALL SELECT 'DIM_GEOGRAPHY',  COUNT(*) FROM HCAHPS_DW.ANALYTICS.DT_DIM_GEOGRAPHY
+ORDER BY layer;
